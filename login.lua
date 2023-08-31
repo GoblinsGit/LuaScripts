@@ -55,8 +55,7 @@ local function getUsernameInterfaceText()
                 {744, 111, -1, 110, 0}})[1].textids
 end
 
--- Credit to Cyro and Higgins for this function, and inspiration for the
--- getUsernameInterfaceText function.
+-- Credit to Cyro and Higgins for this function
 local function isInvalidDetailsInterfaceVisible()
     return (API.ScanForInterfaceTest2Get(false,
                {{744, 0, -1, -1, 0}, {744, 197, -1, 0, 0}, {744, 338, -1, 197, 0}, {744, 340, -1, 338, 0},
