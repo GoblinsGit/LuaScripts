@@ -116,7 +116,7 @@ local function wait_until(x, timeout)
 end
 
 
--- Usage: Modify FILE_PATH to be the absolute path to a colon and newline deliminated accounts file (username:password\n)
+-- Modify FILE_PATH to be the absolute path to a colon and newline deliminated accounts file (username:password\n)
 local FILE_PATH = "C:\\Users\\{USER}\\Documents\\wow_look_at_all_my_accounts.txt"
 
 local accounts = getAccountsFrom(FILE_PATH)
