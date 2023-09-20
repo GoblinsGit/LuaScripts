@@ -1,19 +1,20 @@
 local API = require("api")
 local UTILS = require("utils")
 
-local MAKE_ALL_INTERFACE_COMPONENTS = { { 1370,0,-1,-1,0 }, { 1370,2,-1,0,0 }, { 1370,4,-1,2,0 }, { 1370,5,-1,4,0 }, { 1370,13,-1,5,0 } }
+local MAKE_ALL_INTERFACE_COMPONENTS = {{1370, 0, -1, -1, 0}, {1370, 2, -1, 0, 0}, {1370, 4, -1, 2, 0},
+                                       {1370, 5, -1, 4, 0}, {1370, 13, -1, 5, 0}}
 local obelisk_area = {
     x1 = 2910,
     x2 = 2940,
     y1 = 3420,
-    y2 = 3456,
+    y2 = 3456
 }
 
 local bank_area = {
     x1 = 2870,
     x2 = 2909,
     y1 = 3409,
-    y2 = 3456,
+    y2 = 3456
 }
 
 local middleTile1 = WPOINT.new(2894, 3415, 0)
@@ -31,8 +32,8 @@ end
 
 function UTILS.distance(tile)
     if tile == nil then
-      print("Distance called on nil tile")
-      return -1
+        print("Distance called on nil tile")
+        return -1
     end
     local player = API.PlayerCoord()
     local x = player.x - tile.x
@@ -40,41 +41,43 @@ function UTILS.distance(tile)
     return math.sqrt(x * x + y * y)
 end
 
-falseFunction = function() return not API.Read_LoopyLoop() end
+falseFunction = function()
+    return not API.Read_LoopyLoop()
+end
 function UTILS.walkPath(path, dist, condition)
-  math.randomseed(os.time())
-  if condition == nil then
-    condition = falseFunction
-  end
-
-  for i,tile in ipairs(path) do
-    if (not prev == nil) and UTILS.distance(prev) > dist then
-      return false
-    end
-    sign = -1
-    if math.random() > .5 then
-      sign = 1
+    math.randomseed(os.time())
+    if condition == nil then
+        condition = falseFunction
     end
 
-    rand1 = math.floor(math.random() * dist * .75) * sign
-    rand2 = math.floor(math.random() * dist * .75) * sign
-    local t = WPOINT.new(tile.x + rand1, tile.y + rand2, tile.z)
-    prev = curr
-    curr = tile
-    if not API.DoAction_Tile(t) then
-      return false
-    else 
+    for i, tile in ipairs(path) do
+        if (not prev == nil) and UTILS.distance(prev) > dist then
+            return false
+        end
+        sign = -1
+        if math.random() > .5 then
+            sign = 1
+        end
 
-      UTILS.waitUntil(function() 
-        return UTILS.distance(tile) < dist or condition()
-      end, 20)
-    end
+        rand1 = math.floor(math.random() * dist * .75) * sign
+        rand2 = math.floor(math.random() * dist * .75) * sign
+        local t = WPOINT.new(tile.x + rand1, tile.y + rand2, tile.z)
+        prev = curr
+        curr = tile
+        if not API.DoAction_Tile(t) then
+            return false
+        else
 
-    if condition() then
-      return true
+            UTILS.waitUntil(function()
+                return UTILS.distance(tile) < dist or condition()
+            end, 20)
+        end
+
+        if condition() then
+            return true
+        end
     end
-  end
-  return not curr == nil or UTILS.distance(curr) <= dist
+    return not curr == nil or UTILS.distance(curr) <= dist
 end
 
 function UTILS.waitUntil(x, timeout)
@@ -85,13 +88,15 @@ function UTILS.waitUntil(x, timeout)
     return start + timeout > os.time()
 end
 UTILS.ids = {
-    summoning_primaries = {1440, 1442, 1444, 6979, 2351, 2359, 2361, 2353, 2859, 2138, 2359, 9736, 383, 440, 6032},
+    summoning_primaries = {1440, 1442, 1444, 6979, 2351, 2359, 2361, 2353, 2859, 2138, 2359, 9736, 383, 440, 6032}
 }
 
 local function loadPreset()
     print("Loading preset")
-    API.DoAction_Interface(0x24,0xffffffff,1,517,119,1,5392)
-    UTILS.waitUntil(function() return not API.BankOpen2()end, 5)
+    API.DoAction_Interface(0x24, 0xffffffff, 1, 517, 119, 1, 5392)
+    UTILS.waitUntil(function()
+        return not API.BankOpen2()
+    end, 5)
 
 end
 
@@ -100,26 +105,27 @@ local function getNextIdle()
     return os.time() + delay
 end
 
-local function makeAll() 
-    if UTILS.isInterfaceVisible(MAKE_ALL_INTERFACE_COMPONENTS) then 
+local function makeAll()
+    if UTILS.isInterfaceVisible(MAKE_ALL_INTERFACE_COMPONENTS) then
         print("Making all pouches")
-        API.DoAction_Interface(0xffffffff,0xffffffff,0,1370,30,-1,4512)
+        API.DoAction_Interface(0xffffffff, 0xffffffff, 0, 1370, 30, -1, 4512)
         API.RandomSleep2(3000, 200, 200)
         UTILS.waitUntil(function()
-            return not API.InvItemFound2(UTILS.ids['summoning_primaries']) and not API.IsPlayerAnimating_() end, 3)
+            return not API.InvItemFound2(UTILS.ids['summoning_primaries']) and not API.IsPlayerAnimating_()
+        end, 3)
         return
     end
 end
 
-local function idle_timeout(last_action) 
-    time = os.time() 
-    if time > next_idle then 
+local function idle_timeout(last_action)
+    time = os.time()
+    if time > next_idle then
         print("Arrow key idle")
         next_idle = getNextIdle()
         local key = math.random(37, 41)
         API.KeyboardPress(key)
     end
-    
+
     if (time - last_action) > 200 then
         API.Write_LoopyLoop(false)
     end
@@ -137,13 +143,15 @@ while API.Read_LoopyLoop() do
             if UTILS.distance(bank_tile) > 30 then
                 UTILS.walkPath({middleTile2, middleTile1, bank_tile}, 1, nil)
             end
-            UTILS.waitUntil(function() return API.DoAction_NPC(0x5,3120,{ 14924 },50) end, 15)
+            UTILS.waitUntil(function()
+                return API.DoAction_NPC(0x5, 3120, {14924}, 50)
+            end, 15)
             UTILS.waitUntil(API.BankOpen2, 3)
         end
 
         if API.BankOpen2() then
             print("Loading preset")
-            loadPreset() 
+            loadPreset()
         end
 
         if API.InvItemFound2(UTILS.ids['summoning_primaries']) and API.InvItemFound2(UTILS.CHARMS) then
@@ -152,18 +160,20 @@ while API.Read_LoopyLoop() do
         end
     end
 
-
     if UTILS.inArea(obelisk_area) then
-        if API.InvItemFound2(UTILS.ids['summoning_primaries']) and UTILS.isInterfaceVisible(MAKE_ALL_INTERFACE_COMPONENTS) and API.GetGameState() == 3 then
+        if API.InvItemFound2(UTILS.ids['summoning_primaries']) and
+            UTILS.isInterfaceVisible(MAKE_ALL_INTERFACE_COMPONENTS) and API.GetGameState() == 3 then
             print("Making pouches")
             makeAll()
             last_action = os.time()
         end
-        
+
         if API.InvItemFound2(UTILS.ids['summoning_primaries']) and API.InvItemFound2(UTILS.CHARMS) then
             print("Opening obelisk interface")
-            API.DoAction_Object1(0x29,0,{ 67036 },50)
-            UTILS.waitUntil(function() return UTILS.isInterfaceVisible(MAKE_ALL_INTERFACE_COMPONENTS) end, 5)
+            API.DoAction_Object1(0x29, 0, {67036}, 50)
+            UTILS.waitUntil(function()
+                return UTILS.isInterfaceVisible(MAKE_ALL_INTERFACE_COMPONENTS)
+            end, 5)
         end
 
         if not API.InvItemFound2(UTILS.ids['summoning_primaries']) then
