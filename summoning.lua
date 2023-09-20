@@ -93,7 +93,6 @@ function UTILS.waitUntil(x, timeout)
     return start + timeout > os.time()
 end
 
-
 local function loadPreset()
     print("Loading preset")
     API.DoAction_Interface(0x24, 0xffffffff, 1, 517, 119, 1, 5392)
