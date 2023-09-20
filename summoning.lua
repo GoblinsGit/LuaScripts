@@ -1,6 +1,5 @@
 local API = require("api")
-local UTILS = require("utils")
-
+UTILS = {}
 -- If the script does not currently support your pouch, add the primary ingredient's id to this table.
 UTILS.ids = {
     summoning_primaries = {1440, 1442, 1444, 6979, 2351, 2359, 2361, 2353, 2859, 2138, 2359, 9736, 383, 440, 6032}
