@@ -1,6 +1,11 @@
 local API = require("api")
 local UTILS = require("utils")
 
+-- If the script does not currently support your pouch, add the primary ingredient's id to this table.
+UTILS.ids = {
+    summoning_primaries = {1440, 1442, 1444, 6979, 2351, 2359, 2361, 2353, 2859, 2138, 2359, 9736, 383, 440, 6032}
+}
+
 local MAKE_ALL_INTERFACE_COMPONENTS = {{1370, 0, -1, -1, 0}, {1370, 2, -1, 0, 0}, {1370, 4, -1, 2, 0},
                                        {1370, 5, -1, 4, 0}, {1370, 13, -1, 5, 0}}
 local obelisk_area = {
@@ -87,9 +92,7 @@ function UTILS.waitUntil(x, timeout)
     end
     return start + timeout > os.time()
 end
-UTILS.ids = {
-    summoning_primaries = {1440, 1442, 1444, 6979, 2351, 2359, 2361, 2353, 2859, 2138, 2359, 9736, 383, 440, 6032}
-}
+
 
 local function loadPreset()
     print("Loading preset")
