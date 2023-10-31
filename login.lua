@@ -1,5 +1,5 @@
 local API = require("api")
-local UTILS = require("utils")
+local LOGIN = {}
 
 local TIMEOUT = 15
 
@@ -22,7 +22,7 @@ local PASSWORD_BOX = 1
 local NONE = 2
 
 
-local function getAccountsFrom(file_path)
+function LOGIN.getAccountsFrom(file_path)
     local accounts = {}
     for line in io.lines(file_path) do
         account = {}
@@ -34,7 +34,7 @@ local function getAccountsFrom(file_path)
     return accounts
 end
 
-local function getCursorState()
+function LOGIN.getCursorState()
     cursor_box = tostring(API.VB_GetBits(CURSOR_LOCATION_VARBIT_ID))
     if cursor_box == USERNAME_BOX_VARBIT_STR then
         return USERNAME_BOX
@@ -48,65 +48,88 @@ end
 
 
 -- Credit to Cyro and Higgins for inspiration
-local function getUsernameInterfaceText()
+function LOGIN.getUsernameInterfaceText()
     return API.ScanForInterfaceTest2Get(false,
                {{744, 0, -1, -1, 0}, {744, 26, -1, 0, 0}, {744, 39, -1, 26, 0}, {744, 52, -1, 39, 0},
                 {744, 93, -1, 52, 0}, {744, 94, -1, 93, 0}, {744, 96, -1, 94, 0}, {744, 110, -1, 96, 0},
                 {744, 111, -1, 110, 0}})[1].textids
 end
 
--- Credit to Cyro and Higgins for this function
-local function isInvalidDetailsInterfaceVisible()
-    return (API.ScanForInterfaceTest2Get(false,
-               {{744, 0, -1, -1, 0}, {744, 197, -1, 0, 0}, {744, 338, -1, 197, 0}, {744, 340, -1, 338, 0},
-                {744, 342, -1, 340, 0}, {744, 345, -1, 342, 0}})[1].textids ~= "")
+function LOGIN.isGamesSessionExpired()
+    return API.ScanForInterfaceTest2Get(false, { { 744,0,-1,-1,0 }, { 744,197,-1,0,0 }, { 744,338,-1,197,0 }, { 744,340,-1,338,0 }, { 744,342,-1,340,0 }, { 744,345,-1,342,0 } })[1].textids:match("^Your game session")
 end
 
-local function login(username, password)
+function LOGIN.isInvalidDetailsInterfaceVisible()
+    return API.ScanForInterfaceTest2Get(false, { { 744,0,-1,-1,0 }, { 744,197,-1,0,0 }, { 744,338,-1,197,0 }, { 744,340,-1,338,0 }, { 744,342,-1,340,0 }, { 744,345,-1,342,0 } })[1].textids:match("^Invalid email or password")
+end 
+
+function LOGIN.isAlreadyLoggedInInterfaceVisible()
+    return API.ScanForInterfaceTest2Get(false, { { 744,0,-1,-1,0 }, { 744,197,-1,0,0 }, { 744,338,-1,197,0 }, { 744,340,-1,338,0 }, { 744,342,-1,340,0 }, { 744,345,-1,342,0 } })[1].textids:match("^Your account has not")
+end
+
+function LOGIN.keyboardType(str)
+    -- Does not work well when multiple clients are using the keyboard at the same time.
+    API.TypeOnkeyboard(str)
+end
+
+function LOGIN.typeCreds(username, password)
     -- Move cursor to username field if needed
-    if getCursorState() == PASSWORD_BOX then
+    if LOGIN.getCursorState() == PASSWORD_BOX then
         print("Moving cursor to username")
         API.KeyboardPress2(TAB_KEY, .6, .2)
     end
 
     -- Remove any characters in username field
     cursor_offset = tostring(API.VB_GetBits(CURSOR_OFFSET_VARBIT_ID))
-    while cursor_offset ~= CURSOR_OFFSET_BY_0_VARBIT_STR and API.GetGameState() == 1 and getCursorState() ~= NONE and
-        API.Read_LoopyLoop() do
+    while cursor_offset ~= CURSOR_OFFSET_BY_0_VARBIT_STR
+        and API.GetGameState() == 1
+        and LOGIN.getCursorState() ~= NONE
+        and API.Read_LoopyLoop() do
+
         API.KeyboardPress2(BACKSPACE_KEY, .2, .1)
         cursor_offset = tostring(API.VB_GetBits(CURSOR_OFFSET_VARBIT_ID))
     end
 
     -- Type username then tab
-    API.TypeOnkeyboard2(username)
-    API.KeyboardPress2(TAB_KEY, .6, .2)
+    LOGIN.keyboardType(username)
+    -- API.TypeOnkeyboard(username)
+    API.RandomSleep2(1500, 100, 100)
 
-    if (getUsernameInterfaceText() == "" or getUsernameInterfaceText():lower() ~= username:lower()) then
+    API.KeyboardPress2(TAB_KEY, 600, 200)
+
+    if (LOGIN.getUsernameInterfaceText() == "" 
+        or LOGIN.getUsernameInterfaceText():lower() ~= username:lower()) then
+
         print("Failed to type username")
         return false
     end
 
     -- Remove any text in password field
     cursor_offset = tostring(API.VB_GetBits(CURSOR_OFFSET_VARBIT_ID))
-    while cursor_offset ~= CURSOR_OFFSET_BY_0_VARBIT_STR and API.GetGameState() == 1 and getCursorState() ~= NONE and
-        API.Read_LoopyLoop() do
-        API.KeyboardPress2(BACKSPACE_KEY, .2, .1)
+    while cursor_offset ~= CURSOR_OFFSET_BY_0_VARBIT_STR 
+        and API.GetGameState() == 1 
+        and LOGIN.getCursorState() ~= NONE 
+        and API.Read_LoopyLoop() do
+
+        API.KeyboardPress2(BACKSPACE_KEY, 100, 50)
         cursor_offset = tostring(API.VB_GetBits(CURSOR_OFFSET_VARBIT_ID))
     end
 
     -- Failsafe to avoid typing password in plainsight somewhere
-    if getCursorState() ~= PASSWORD_BOX then
+    if LOGIN.getCursorState() ~= PASSWORD_BOX then
         print("Failed to login, invalid cursor state")
         return false
     end
 
     -- Type password then return
-    API.TypeOnkeyboard2(password)
-    API.KeyboardPress2(RETURN_KEY, .2, .1)
+    LOGIN.keyboardType(password)
+    API.RandomSleep2(500, 100, 100)
+
+    API.KeyboardPress2(RETURN_KEY, 100, 50)
     return true
 end
 
-local function wait_until(x, timeout)
+function LOGIN.wait_until(x, timeout)
     start = os.time()
     while not x() and start + timeout > os.time() do
         API.RandomSleep(.6, .2, .2)
@@ -114,60 +137,85 @@ local function wait_until(x, timeout)
     return start + timeout > os.time()
 end
 
+function LOGIN.login(username, password, script)
+    local loggedIn = false
+    API.Write_LoopyLoop(true)
 
--- Modify FILE_PATH to be the absolute path to a colon and newline deliminated accounts file (username:password\n)
-local FILE_PATH = "C:\\Users\\{USER}\\Documents\\wow_look_at_all_my_accounts.txt"
+    while(API.Read_LoopyLoop() and not loggedIn) do
+        if LOGIN.isAlreadyLoggedInInterfaceVisible()
+            and LOGIN.getCursorState() == NONE
+            and API.GetGameState() == 1 then
 
-local accounts = getAccountsFrom(FILE_PATH)
-local username = accounts[1][1]
-local password = accounts[1][2]
-
-while API.Read_LoopyLoop() do
-    if API.GetGameState() == 1 and getCursorState() == NONE then
-        if #accounts > 1 then
-            print("Account login failed, trying next account")
-            table.remove(accounts, 1)
-            username = accounts[1][1]
-            password = accounts[1][2]
-        else
+            -- Account already logged in
+            if LOGIN.isAlreadyLoggedInInterfaceVisible() then
+                print("account already logged in")
+                API.KeyboardPress2(ESC_KEY, .2, .1)
+                return false
+            end
+            -- NOTE: If you want to add logic to try another account, here is a good spot to update user/pass/script then continue looping.
+        end
+    
+        if LOGIN.isGamesSessionExpired() then
             API.Write_LoopyLoop(false)
-            print("No more accounts to login with")
+            print("Game session expired")
+            return false
         end
-
-        API.KeyboardPress2(ESC_KEY, .2, .1)
-        wait_until((function()
-                return getCursorState() ~= NONE
-            end), TIMEOUT)
-        goto continue
-    end
-
-    if API.GetGameState() == 1 and getCursorState() ~= NONE then
-        -- Login from login screen
-        if (login(username, password)) then
-            -- If login success, wait for up to 15 seconds until lobby appears 
-            wait_until((function()
-                return API.GetGameState() == 2
+    
+        if LOGIN.isInvalidDetailsInterfaceVisible() then
+            print("Failed to type credentials, retrying")
+            API.KeyboardPress2(ESC_KEY, .2, .1)
+            LOGIN.wait_until((function()
+                return LOGIN.getCursorState() ~= NONE
             end), TIMEOUT)
         end
 
-        goto continue
+        if API.GetGameState() == 1 and LOGIN.getCursorState() == NONE then
+            -- This should catch the settings page if it is open
+            API.KeyboardPress2(ESC_KEY, .2, .1)
+            LOGIN.wait_until((function()
+                    return LOGIN.getCursorState() ~= NONE
+                end), TIMEOUT)
+        end
+
+        if API.GetGameState() == 1 and LOGIN.getCursorState() ~= NONE then
+            -- Login from login screen
+            if (LOGIN.typeCreds(username, password)) then
+                -- If login success, wait for up to 15 seconds until lobby appears
+                LOGIN.wait_until((function()
+                    return API.GetGameState() == 2
+                        or LOGIN.isAlreadyLoggedInInterfaceVisible()
+                        or LOGIN.isInvalidDetailsInterfaceVisible()
+                        or LOGIN.isGamesSessionExpired()
+                end), TIMEOUT)
+            end
+        end
+
+        if API.GetGameState() == 2 then
+            -- User is in the lobby, use space to login. Adding world selection from here isn't too hard.
+            -- TODO: Add logic to catch f2p/p2p
+            API.KeyboardPress2(SPACE_KEY, .6, .2)
+            LOGIN.wait_until((function()
+                return API.GetGameState() == 3
+            end), TIMEOUT)
+        end
+
+        if API.GetGameState() == 3 then
+            API.Write_LoopyLoop(false)
+            loggedIn = true
+        end
     end
 
-    if API.GetGameState() == 2 then
-        -- User is in the lobby, use space to login. Future state could add world selection.
-        API.KeyboardPress2(SPACE_KEY, .6, .2)
-        wait_until((function()
-            return API.GetGameState() == 3
-        end), TIMEOUT)
-        goto continue
-    end
+    API.RandomSleep2(3000, 1000, 2000)
+    if loggedIn == true then
+        print("Starting script" .. script)
+        API.Write_LoopyLoop(true)
 
-    if API.GetGameState() == 3 then
-        -- User is logged in. Why even run the script at this point?
-        API.Write_LoopyLoop(false)
-        goto continue
+        -- If you are calling this from another script, you may eventually run into a stack overflow because of this potential recursive nature of this call.
+        -- Ideally you would comment this line out and call require(script) somewhere else. Ex. on client startup. 
+        require(script)
     end
-
-    ::continue::
-    API.RandomSleep2(1500, 200, 200)
 end
+
+return LOGIN
+
+
