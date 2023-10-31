@@ -138,6 +138,19 @@ function LOGIN.wait_until(x, timeout)
 end
 
 function LOGIN.login(username, password, script)
+    if API.GetGameState() == 3 then
+        print("Already logged in")
+        return false
+    end
+
+    if API.GetGameState() == 2 then
+        print("Logged into lobby... pressing space")
+        API.KeyboardPress2(SPACE_KEY, .6, .2)
+        return LOGIN.wait_until((function()
+            return API.GetGameState() == 3
+        end), TIMEOUT)
+    end
+
     local loggedIn = false
     API.Write_LoopyLoop(true)
 
