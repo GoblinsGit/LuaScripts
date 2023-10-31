@@ -5,7 +5,6 @@ local FILE_PATH = "C:\\accs.txt"
 local accounts = LOGIN.getAccountsFrom(FILE_PATH)
 local username = accounts[1][1]
 local password = accounts[1][2]
-
 local script = accounts[1][3]
 
 LOGIN.login(username, password, script)
