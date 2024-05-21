@@ -118,6 +118,16 @@ while API.Read_LoopyLoop() do
             API.RandomSleep2(600, 600, 300)
         end
 
+        if (getQuestVBState() == 690 
+            or getQuestVBState() == 946 
+            or getQuestVBState() == 1074 
+            or getQuestVBState() == 9788)
+            and not API.InventoryInterfaceCheckvarbit() then
+            print("Open inventory")
+            API.DoAction_Interface(0xc2,0xffffffff,1,1431,0,9,API.OFF_ACT_GeneralInterface_route)
+            API.RandomSleep2(600, 0, 1200)
+        end
+        
         if getQuestVBState() == 690 and API.InvItemcount_1(items['ritualCandle']) > 0 then
             print("Place candles")
             place(filterNPCsByName(npcs['ritualSites'], "Light source spot"))
@@ -161,11 +171,6 @@ while API.Read_LoopyLoop() do
 
         if getQuestVBState() == 9788 and API.InvItemcount_1(items['deathGuard']) > 0 then
             print("Putting on death guard")
-            if not API.InventoryInterfaceCheckvarbit() then
-                print("Open inventory")
-                API.DoAction_Interface(0xc2,0xffffffff,1,1431,0,9,API.OFF_ACT_GeneralInterface_route)
-                API.RandomSleep2(600, 0, 1200)
-            end
             if API.InvItemcount_1(items['deathGuard']) > 0 then
                 API.DoAction_Inventory1(items['deathGuard'], 1, 2, API.OFF_ACT_GeneralInterface_route)
                 API.RandomSleep2(600, 0, 600)
